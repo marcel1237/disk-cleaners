@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Linux Disk Cleaner Toolkit</title>
+
+  <style>
+    :root {
+      --bg-main: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      --glass-bg: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --text-main: #eaeef3;
+      --text-muted: #b0c4d8;
+      --accent: #4fc3f7;
+      --accent-green: #66bb6a;
+      --accent-orange: #ffa726;
+      --accent-red: #ef5350;
+      --shadow-soft: 0 20px 40px rgba(0, 0, 0, 0.35);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --transition-fast: 0.25s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg-main);
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1200px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 32px;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 span {
+      font-size: 2.6rem;
+    }
+
+    header p {
+      max-width: 700px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .filters-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .filter-button {
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      cursor: pointer;
+      transition: background var(--transition-fast), transform var(--transition-fast);
+      box-shadow: var(--shadow-soft);
+      font-size: 0.9rem;
+    }
+
+    .filter-button:hover {
+      background: rgba(255, 255, 255, 0.14);
+      transform: translateY(-2px);
+    }
+
+    .filter-button.active {
+      background: rgba(79, 195, 247, 0.25);
+      border-color: var(--accent);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .tool-card {
+      position: relative;
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      background: var(--glass-bg);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .tool-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .tool-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .tool-title span {
+      font-size: 1.6rem;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    .badge.gui {
+      background: rgba(102, 187, 106, 0.25);
+      color: var(--accent-green);
+    }
+
+    .badge.cli {
+      background: rgba(255, 167, 38, 0.25);
+      color: var(--accent-orange);
+    }
+
+    .tool-description {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .features-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .features-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+
+    .features-list li::before {
+      content: "✔";
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+
+    .install-box {
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.85rem;
+      color: #cfd8dc;
+      overflow-x: auto;
+    }
+
+    .install-box code {
+      white-space: pre;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 2rem;
+      }
+
+      header p {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    <header>
+      <h1><span>🧹</span> Linux Disk Cleaner Toolkit</h1>
+      <p>
+        Conjunto profissional de ferramentas para análise, limpeza e otimização
+        de armazenamento em sistemas Linux. Interface moderna, organizada e pronta
+        para uso em documentação, painéis ou wikis técnicas.
+      </p>
+
+      <div class="filters-bar">
+        <button class="filter-button active" data-filter="all">Todos</button>
+        <button class="filter-button" data-filter="gui">GUI</button>
+        <button class="filter-button" data-filter="cli">CLI</button>
+      </div>
+    </header>
+
+    <main id="toolsGrid">
+
+      <section class="tool-card" data-type="gui">
+        <div class="tool-header">
+          <div class="tool-title">
+            <span>🧼</span> BleachBit
+          </div>
+          <span class="badge gui">GUI</span>
+        </div>
+
+        <p class="tool-description">
+          Ferramenta avançada de limpeza de sistema, equivalente ao CCleaner no Linux,
+          focada em remoção segura de caches, logs e arquivos temporários.
+        </p>
+
+        <ul class="features-list">
+          <li>Limpeza profunda de cache</li>
+          <li>Suporte a navegadores</li>
+          <li>Modo administrador</li>
+        </ul>
+
+        <div class="install-box">
+          <code>sudo apt install bleachbit</code>
+        </div>
+      </section>
+
+      <section class="tool-card" data-type="gui">
+        <div class="tool-header">
+          <div class="tool-title">
+            <span>📊</span> Stacer
+          </div>
+          <span class="badge gui">GUI</span>
+        </div>
+
+        <p class="tool-description">
+          Otimizador visual de sistema com foco em limpeza, monitoramento e
+          gerenciamento de inicialização.
+        </p>
+
+        <ul class="features-list">
+          <li>Dashboard de recursos</li>
+          <li>Gerenciamento de serviços</li>
+          <li>Desinstalação simplificada</li>
+        </ul>
+
+        <div class="install-box">
+          <code>sudo apt install stacer</code>
+        </div>
+      </section>
+
+      <section class="tool-card" data-type="gui">
+        <div class="tool-header">
+          <div class="tool-title">
+            <span>🧠</span> Czkawka
+          </div>
+          <span class="badge gui">GUI</span>
+        </div>
+
+        <p class="tool-description">
+          Utilitário de alta performance escrito em Rust, ideal para localizar
+          arquivos duplicados, grandes volumes e resíduos ocultos.
+        </p>
+
+        <ul class="features-list">
+          <li>Arquivos duplicados</li>
+          <li>Pastas vazias</li>
+          <li>Links quebrados</li>
+        </ul>
+
+        <div class="install-box">
+          <code>flatpak install flathub com.github.qarmin.czkawka</code>
+        </div>
+      </section>
+
+      <section class="tool-card" data-type="cli">
+        <div class="tool-header">
+          <div class="tool-title">
+            <span>⚙️</span> APT Cleanup
+          </div>
+          <span class="badge cli">CLI</span>
+        </div>
+
+        <p class="tool-description">
+          Comandos nativos para remoção de pacotes obsoletos e limpeza de cache
+          do gerenciador APT.
+        </p>
+
+        <ul class="features-list">
+          <li>Remove dependências órfãs</li>
+          <li>Libera espaço rapidamente</li>
+        </ul>
+
+        <div class="install-box">
+          <code>
+sudo apt autoremove --purge
+sudo apt autoclean
+sudo apt clean
+          </code>
+        </div>
+      </section>
+
+      <section class="tool-card" data-type="cli">
+        <div class="tool-header">
+          <div class="tool-title">
+            <span>📜</span> Journalctl
+          </div>
+          <span class="badge cli">CLI</span>
+        </div>
+
+        <p class="tool-description">
+          Controle e limpeza de logs persistentes do systemd, evitando consumo
+          excessivo de disco ao longo do tempo.
+        </p>
+
+        <ul class="features-list">
+          <li>Controle por tamanho</li>
+          <li>Limpeza segura de logs</li>
+        </ul>
+
+        <div class="install-box">
+          <code>sudo journalctl --vacuum-size=200M</code>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    const filterButtons = document.querySelectorAll(".filter-button");
+    const toolCards = document.querySelectorAll(".tool-card");
+
+    function applyFilter(type) {
+      toolCards.forEach(card => {
+        const cardType = card.getAttribute("data-type");
+        if (type === "all" || cardType === type) {
+          card.style.display = "flex";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    }
+
+    filterButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        filterButtons.forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+        applyFilter(button.dataset.filter);
+      });
+    });
+  </script>
+</body>
+</html>
